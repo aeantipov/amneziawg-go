@@ -5,12 +5,14 @@ RUN go mod download && \
     go mod verify && \
     go build -ldflags '-linkmode external -extldflags "-fno-PIC -static"' -v -o /usr/bin
 
-FROM alpine:3.19
-ARG AWGTOOLS_RELEASE="1.0.20241018"
-RUN apk --no-cache add iproute2 iptables bash && \
-    cd /usr/bin/ && \
-    wget https://github.com/amnezia-vpn/amneziawg-tools/releases/download/v${AWGTOOLS_RELEASE}/alpine-3.19-amneziawg-tools.zip && \
-    unzip -j alpine-3.19-amneziawg-tools.zip && \
+FROM alpine:3.20
+# Build awgtools from source (bleeding edge)
+WORKDIR /awgtools
+RUN apk --no-cache add iproute2 iptables bash git make clang gcompat libc-dev linux-headers
+RUN git clone --depth=1 https://github.com/amnezia-vpn/amneziawg-tools.git && \
+    cd amneziawg-tools/src && \
+    make && \
+    make install && \
     chmod +x /usr/bin/awg /usr/bin/awg-quick && \
     ln -s /usr/bin/awg /usr/bin/wg && \
     ln -s /usr/bin/awg-quick /usr/bin/wg-quick
